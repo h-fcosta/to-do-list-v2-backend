@@ -7,6 +7,11 @@ import redisClient from "../config/redis.js";
 export default class AuthController {
   static async registerUser(req, res) {
     const { name, email, password, confirmPassword } = req.body;
+    const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,3}$/;
+
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Invalid e-mail." });
+    }
 
     if (confirmPassword !== password) {
       return res.status(401).json({ message: "Passwords are different" });

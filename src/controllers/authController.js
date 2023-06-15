@@ -11,14 +11,15 @@ export default class AuthController {
     const { name, email, password, confirmPassword } = req.body;
     const verificationToken = uuid4();
 
-    const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,3}$/;
+    const validationErrors = validateRegisterInput(
+      name,
+      email,
+      password,
+      confirmPassword
+    );
 
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: "Invalid e-mail." });
-    }
-
-    if (confirmPassword !== password) {
-      return res.status(401).json({ message: "Passwords are different" });
+    if (Object.keys(validationErrors).length > 0) {
+      return res.status(400).json({ erros: validationErrors });
     }
 
     const userExists = await User.findOne({ where: { email: email } });
@@ -54,6 +55,12 @@ export default class AuthController {
 
   static async loginUser(req, res) {
     const { email, password } = req.body;
+
+    const validationErrors = validateLoginInput(email, password);
+
+    if (Object.keys(validationErrors) > 0) {
+      return res.status(400).json({ errors: validationErrors });
+    }
 
     const findUser = await User.findOne({ where: { email: email } });
 

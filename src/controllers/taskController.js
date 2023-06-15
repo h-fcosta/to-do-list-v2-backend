@@ -4,6 +4,13 @@ import jwt from "jsonwebtoken";
 export default class TaskController {
   static async newTask(req, res) {
     const { title, description } = req.body;
+
+    const validationErrors = validateTaskInput(title);
+
+    if (Object.keys(validationErrors).length > 0) {
+      return res.status(400).json({ errors: validationErrors });
+    }
+
     const userId = jwt.verify(
       req.headers.authorization.split(" ")[1],
       process.env.SECRET_JWT
@@ -48,6 +55,12 @@ export default class TaskController {
       const taskId = req.params.idTask;
 
       const { title, description } = req.body;
+
+      const validationErrors = validateTaskInput(title);
+
+      if (Object.keys(validationErrors).length > 0) {
+        return res.status(400).json({ errors: validationErrors });
+      }
 
       const task = await Task.findByPk(taskId);
 

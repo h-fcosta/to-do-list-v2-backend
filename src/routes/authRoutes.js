@@ -1,13 +1,14 @@
 import express from "express";
 import AuthController from "../controllers/authController.js";
-import { authenticateToken } from "../controllers/middleware.js";
+import { authenticateUser } from "../controllers/middleware.js";
 
 const router = express.Router();
 
 router
   .post("/auth/register", AuthController.registerUser)
   .post("/auth/login", AuthController.loginUser)
-  .post("/auth/logout", authenticateToken, AuthController.logoutUser)
-  .post("/auth/renew", authenticateToken, AuthController.renewRefreshToken);
+  .post("/auth/logout", authenticateUser, AuthController.logoutUser)
+  .post("/auth/renew", authenticateUser, AuthController.renewRefreshToken)
+  .get("/verify/:token", AuthController.verifyEmail);
 
 export default router;

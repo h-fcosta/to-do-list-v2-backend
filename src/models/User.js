@@ -1,5 +1,4 @@
 import sequelize from "../config/dbConnect.js";
-import Task from "./Task.js";
 import { DataTypes } from "sequelize";
 import { v4 as uuid4 } from "uuid";
 
@@ -21,6 +20,14 @@ const User = sequelize.define("User", {
   password: {
     type: DataTypes.STRING,
     allowNull: false
+  },
+  verificationToken: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  isVerified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   }
 });
 

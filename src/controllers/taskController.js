@@ -1,9 +1,17 @@
 import Task from "../models/Task.js";
 import jwt from "jsonwebtoken";
+import { validateTaskInput } from "./middleware.js";
 
 export default class TaskController {
   static async newTask(req, res) {
     const { title, description } = req.body;
+
+    const validationErrors = validateTaskInput(title);
+
+    if (Object.keys(validationErrors).length > 0) {
+      return res.status(400).json({ errors: validationErrors });
+    }
+
     const userId = jwt.verify(
       req.headers.authorization.split(" ")[1],
       process.env.SECRET_JWT
@@ -49,10 +57,16 @@ export default class TaskController {
 
       const { title, description } = req.body;
 
+      const validationErrors = validateTaskInput(title);
+
+      if (Object.keys(validationErrors).length > 0) {
+        return res.status(400).json({ errors: validationErrors });
+      }
+
       const task = await Task.findByPk(taskId);
 
       if (!task) {
-        return res.status(404).json({ message: "Task not found" });
+        return res.status(404).json({ message: "Task not found." });
       }
 
       if (title) {
@@ -69,9 +83,7 @@ export default class TaskController {
     } catch (error) {
       console.error(error);
 
-      return res
-        .status(500)
-        .json({ message: "An error ocurred while updating the task" });
+      return res.status(500).json({ message: "Internal server error." });
     }
   }
 
@@ -91,9 +103,7 @@ export default class TaskController {
     } catch (error) {
       console.error(error);
 
-      res
-        .status(500)
-        .json({ message: "An error ocurred while updating the task" });
+      res.status(500).json({ message: "Internal server error." });
     }
   }
 }

@@ -3,24 +3,27 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import redisClient from "../config/redis.js";
+import { validateLoginInput, validateRegisterInput } from "./middleware.js";
 
 export default class AuthController {
   static async registerUser(req, res) {
     const { name, email, password, confirmPassword } = req.body;
-    const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,3}$/;
 
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: "Invalid e-mail." });
-    }
+    const validationErrors = validateRegisterInput(
+      name,
+      email,
+      password,
+      confirmPassword
+    );
 
-    if (confirmPassword !== password) {
-      return res.status(401).json({ message: "Passwords are different" });
+    if (Object.keys(validationErrors).length > 0) {
+      return res.status(400).json({ erros: validationErrors });
     }
 
     const userExists = await User.findOne({ where: { email: email } });
 
     if (userExists) {
-      return res.status(401).json({ message: "E-mail already in use" });
+      return res.status(400).json({ message: "E-mail already in use" });
     }
 
     try {
@@ -39,6 +42,11 @@ export default class AuthController {
 
   static async loginUser(req, res) {
     const { email, password } = req.body;
+    const validationErrors = validateLoginInput(email, password);
+
+    if (Object.keys(validationErrors) > 0) {
+      return res.status(400).json({ errors: validationErrors });
+    }
 
     const findUser = await User.findOne({ where: { email: email } });
 
@@ -70,7 +78,7 @@ export default class AuthController {
       });
 
       return res
-        .status(201)
+        .status(200)
         .set("Authorization", accessToken)
         .json({ accessToken, refreshToken });
     } catch (error) {
@@ -88,7 +96,7 @@ export default class AuthController {
 
       return res.status(200).json({ message: "User logged out." });
     } catch (error) {
-      return res.status(400).json({ message: "Unable to logout user." });
+      return res.status(500).json({ message: "Internal server error" });
     }
   }
 
@@ -97,7 +105,7 @@ export default class AuthController {
       const refreshToken = req.cookies.refreshToken;
 
       if (!refreshToken) {
-        return res.status(403).json({ message: "Refresh Token not found" });
+        return res.status(404).json({ message: "Refresh Token not found" });
       }
 
       const userId = await redisClient.get(refreshToken);
@@ -127,7 +135,7 @@ export default class AuthController {
         })
         .json({ accessToken, newRefreshToken });
     } catch {
-      return res.status(401).json({ message: "Unable to refresh tokens." });
+      return res.status(500).json({ message: "Internal server error." });
     }
   }
 }
